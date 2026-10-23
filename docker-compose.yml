@@ -1,0 +1,28 @@
+# 由 ../../local_dev_env/docker-compose.yml include；共享 web 网络由宿主定义。
+services:
+  whatsapp-gateway:
+    build:
+      context: ./backend
+    image: whatsapp-gateway:local
+    container_name: whatsapp-gateway
+    restart: unless-stopped
+    env_file:
+      - ../envs/whatsapp_gateway.env
+    environment:
+      TZ: Asia/Shanghai
+    expose:
+      - "8000"
+    # 仅供本机联调，公网入口通过 Nginx 的独立路由。
+    ports:
+      - "127.0.0.1:8011:8000"
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/whatsapp_gateway/api/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - web

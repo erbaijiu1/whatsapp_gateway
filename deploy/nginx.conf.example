@@ -1,0 +1,11 @@
+# 添加到已有 HTTPS server 块。宿主机 Nginx 示例；容器 Nginx 应改用可达容器地址。
+location /whatsapp_gateway/api/webhook {
+    proxy_pass http://127.0.0.1:8011;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    client_max_body_size 1m;
+    proxy_read_timeout 30s;
+}
+# 内部发送接口和报价服务入站接口不对公网开放。
+location /whatsapp_gateway/api/internal/ { return 404; }
+location /logistics_ai_agent/api/internal/ { return 404; }

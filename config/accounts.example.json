@@ -1,0 +1,9 @@
+[
+  {
+    "account_code": "default",
+    "phone_number_id": "REPLACE_WITH_META_PHONE_NUMBER_ID",
+    "access_token": "REPLACE_WITH_META_ACCESS_TOKEN",
+    "verify_token": "REPLACE_WITH_YOUR_WEBHOOK_VERIFY_TOKEN",
+    "app_secret": "REPLACE_WITH_META_APP_SECRET"
+  }
+]
