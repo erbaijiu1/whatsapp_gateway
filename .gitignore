@@ -7,3 +7,5 @@ logs/
 .DS_Store
 dist/
 coverage/
+.idea
+*.pyc
