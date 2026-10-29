@@ -1,9 +1,0 @@
-[
-  {
-    "account_code": "local_dev",
-    "phone_number_id": "100000000000001",
-    "access_token": "LOCAL_DEV_NO_META_DELIVERY",
-    "verify_token": "local-dev-webhook-verify-token",
-    "app_secret": "local-dev-app-secret"
-  }
-]

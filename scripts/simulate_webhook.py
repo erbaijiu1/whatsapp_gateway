@@ -32,8 +32,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--url",
-        default="http://127.0.0.1/whatsapp_gateway/api/webhook",
-        help="本地 webhook 地址，默认经过 Nginx",
+        default="http://127.0.0.1:8011/whatsapp_gateway/api/webhook",
+        help="本地 webhook 地址，默认通过网关的宿主机调试端口",
     )
     parser.add_argument(
         "--accounts-file",

@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     agent_base_url: str = "http://logistics-ai-agent:8000/logistics_ai_agent/api"
     agent_ingress_token: SecretStr = Field(min_length=32)
     gateway_send_token: SecretStr = Field(min_length=32)
+    accounts_json: SecretStr | None = None
     accounts_file: Path = Path("config/accounts.json")
     data_dir: Path = Path("data")
     graph_api_version: str = Field(default="v23.0", pattern=r"^v[0-9]+\.[0-9]+$")
@@ -31,7 +32,8 @@ class Settings(BaseSettings):
         return self
 
     def load_accounts(self) -> list[WhatsAppAccount]:
-        accounts = [WhatsAppAccount.model_validate(row) for row in json.loads(self.accounts_file.read_text())]
+        raw = self.accounts_json.get_secret_value() if self.accounts_json else self.accounts_file.read_text()
+        accounts = [WhatsAppAccount.model_validate(row) for row in json.loads(raw)]
         if not accounts:
             raise ValueError("Configure at least one WhatsApp account")
         for field in ("account_code", "phone_number_id"):

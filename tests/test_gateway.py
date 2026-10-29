@@ -45,6 +45,25 @@ def send_request():
 AUTH = {"Authorization": "Bearer " + "s" * 32}
 
 
+def test_accounts_json_takes_precedence_over_file(tmp_path):
+    accounts = [{
+        "account_code": "env_account",
+        "phone_number_id": "333",
+        "access_token": "env-access",
+        "verify_token": "env-verify",
+        "app_secret": "env-secret",
+    }]
+    config = Settings(
+        _env_file=None,
+        accounts_json=json.dumps(accounts),
+        accounts_file=tmp_path / "missing.json",
+        agent_ingress_token="i" * 32,
+        gateway_send_token="s" * 32,
+    )
+    loaded = config.load_accounts()
+    assert [account.account_code for account in loaded] == ["env_account"]
+
+
 def test_verification_rejects_wrong_account_and_empty_token(config):
     with TestClient(create_app(config)) as client:
         url = "/whatsapp_gateway/api/webhook/sales_a"

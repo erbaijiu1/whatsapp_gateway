@@ -8,15 +8,16 @@ Meta -> 网关验签/识别接收账号 -> logistics_ai_agent 持久化消息、
 Meta <- 网关按 account_code 选 phone_number_id/token <- 报价服务提交回复
 ```
 
-## 统一部署（local_dev_env）
+## 统一部署（toc_service）
 
-网关作为服务插件接入 `../../local_dev_env/docker-compose.yml` 的 include 列表，加入共享 `web` 网络。
-Nginx 入口在 `../../local_dev_env/nginx/locations/whatsapp_gateway.conf`，不修改公共主配置。
+网关作为服务插件接入 `../../docker-compose.yml` 的 include 列表，加入共享 `web` 网络。
+Nginx 入口在 `../../nginx/locations/whatsapp_gateway.conf`，不修改公共主配置。
 
 1. 环境变量统一放在 **`../envs/whatsapp_gateway.env`**，Compose 的 `env_file` 直接引用该文件。
    新机器可以从 `.env.example` 复制到此位置；不要在项目目录创建 `.env`。
-   `toCom/.gitignore` 已忽略 `/envs/`。账号凭据放在 `config/accounts.json`，该文件也已忽略。
-2. 参考 `config/accounts.example.json` 创建 `config/accounts.json`，填写 Meta phone_number_id、access_token、verify_token、app_secret。
+   `toCom/.gitignore` 已忽略 `/envs/`。不要把正式凭据写进项目目录或提交到 Git。
+2. 参考 `config/accounts.example.json`，将账号数组压缩为单行 JSON 后写入环境文件的 `ACCOUNTS_JSON`。
+   其中包含 Meta phone_number_id、access_token、verify_token、app_secret，并支持配置多个账号。
 3. 生成两个不同的服务令牌（至少32字符），按以下关系配置：
 
 | 网关环境文件 | 报价服务配置 |
@@ -26,12 +27,12 @@ Nginx 入口在 `../../local_dev_env/nginx/locations/whatsapp_gateway.conf`，�
 | `AGENT_BASE_URL=http://logistics-ai-agent:8000/logistics_ai_agent/api` | `WHATSAPP_GATEWAY_URL=http://whatsapp-gateway:8000/whatsapp_gateway/api` |
 
 服务间使用容器服务名通信。宿主机调试端口固定为 `127.0.0.1:8011`，不再从项目 `.env` 插值。
-生产回调仍需公网 HTTPS；当前统一环境的 Nginx 只提供本地 HTTP。
+生产回调通过统一环境的 Nginx HTTPS 入口接收。
 
 4. 在统一入口目录运行：
 
 ```bash
-cd /Users/hc/Desktop/code/local_dev_env
+cd /data/toc_service
 # 不打印渲染后的环境变量，避免终端泄露凭据
 docker compose config --quiet
 docker compose up -d --no-deps --build whatsapp-gateway
@@ -84,17 +85,19 @@ docker compose ps whatsapp-gateway
 
 ### 本地模拟 Meta 入站
 
-服务启动后，可使用脚本生成 Meta 格式的回调并按本地账号的 App Secret 签名：
+服务启动后，可使用脚本生成 Meta 格式的回调并按账号的 App Secret 签名。由于正式凭据只存在环境文件，
+需要先把账号 JSON 临时保存到一个不提交的文件，再通过 `--accounts-file` 指定：
 
 ```bash
-cd /Users/hc/Desktop/code/toCom/whatsapp_gateway
+cd /data/toc_service/toCom/whatsapp_gateway
 python3 scripts/simulate_webhook.py \
+  --accounts-file /path/to/private-accounts.json \
   --phone 85290002024 \
   --name 本地模拟客户 \
   --content '我有100公斤芒果，从深圳发到香港观塘，有电梯，请问多少钱？'
 ```
 
-脚本默认经 Nginx 请求 `/whatsapp_gateway/api/webhook`，不会联系 Meta。每次自动生成新的
+脚本默认通过宿主机调试端口 `127.0.0.1:8011` 请求网关，不会联系 Meta。每次自动生成新的
 message ID；传入相同的 `--message-id` 可验证去重。建议本地将 agent 的
 `AI_REPLY_DELIVERY_MODE` 设为 `REVIEW_REQUIRED`，然后在
 <http://localhost:8010/logistics_ai_agent/reply-review> 检查待审核回复；也可以打开
